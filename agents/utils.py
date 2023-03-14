@@ -1,5 +1,11 @@
 import numpy as np
 
+def N():
+    n = 0
+    while True:
+        yield n
+        n += 1
+
 class LRUpdater:
     def __init__(self, lr, lr_decay):
         self.lr = lr
@@ -50,9 +56,4 @@ class ValueMap:
 
         self.num_encountered[state][action] += 1
 
-
-        # num_encountered = self.num_encountered[state][action]
-
-        # self.values[state][action] = self.updater(self.values[state][action], reward, num_encountered)
-        # self.num_encountered[state][action] += 1
 

@@ -32,6 +32,7 @@ class DiscreteInf:
             return 0
         
         return sign(val) * math.sqrt(abs(val)) * self.factor
+        # return val * self.factor
 
     def __call__(self, val):
         if val == 0:

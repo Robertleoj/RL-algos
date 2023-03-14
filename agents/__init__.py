@@ -1,1 +1,1 @@
-from .Q_learning import QAgentVanilla
+from .Q_learning import QAgent

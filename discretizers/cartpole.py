@@ -5,7 +5,7 @@ config = {
     'cart_pos': {
         'start': -4.8,
         'end': 4.8,
-        'num_intervals': 4
+        'num_intervals': 10
     },
     'pole_angle': {
         'start': -0.418,
@@ -13,12 +13,12 @@ config = {
         'num_intervals': 20
     },
     'pole_angular_vel': {
-        'num_intervals': 100,
-        'factor': 10
+        'num_intervals': 20,
+        'factor': 9
     },
     'cart_vel': {
-        'num_intervals': 100,
-        'factor': 10
+        'num_intervals': 20,
+        'factor': 9
     }
 }
 
