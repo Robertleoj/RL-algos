@@ -2,22 +2,34 @@ import numpy as np
 import pickle
 from config import config
 from pathlib import Path
-from .utils import AvgUpdater, ValueMap, N
+import utils
 from plotting import animation_plot
+import gymnasium as gym
 import signal
 
-conf = config['q_learning']
 
 class QAgent:
-    def __init__(self, num_actions):
-        self.updater = AvgUpdater()
-        self.values = ValueMap(num_actions)
+    def __init__(self, env_name):
+
+        self.env_name = env_name
+
+        self.conf = config['q_learning'][env_name]
+
+        self.updater = utils.updaters.get_updater(self.conf)
+
+        # get num actions
+        env, _ = utils.get_env(env_name)
+        num_actions = env.action_space.n
+        env.close()
+
+        self.values = utils.data_structures.ValueMap(num_actions, init_val=self.conf['init_val'])
         self.num_actions = num_actions
-        self.fpath = Path("./weights/" + conf['save_name'])
+
+        self.fpath = Path("./weights/" + self.conf['save_name'])
 
     def act(self, state):
 
-        if np.random.random() < conf['epsilon']:
+        if np.random.random() < self.conf['epsilon']:
             return np.random.randint(self.num_actions)
 
         return self.act_optimal(state)
@@ -33,15 +45,10 @@ class QAgent:
             self.load()
 
     def save(self):
-        with open(self.fpath, 'wb') as f:
-            pickle.dump(self.values, f)
+        self.values.save(self.fpath)
 
     def load(self):
-        if not self.fpath.exists():
-            raise ValueError(f'No save found')
-
-        with open(self.fpath, 'rb') as f:
-            self.values = pickle.load(f)
+        self.values.load(self.fpath)
 
     def learn(self, state, action, reward, next_state=None):
 
@@ -53,20 +60,20 @@ class QAgent:
         old_val = self.values.get(state)[action]
         n_visits = self.values.get_visits(state)[action]
 
-        updated = self.updater(old_val, reward + conf['gamma'] * next_val, n_visits)
+        updated = self.updater(old_val, reward + self.conf['gamma'] * next_val, n_visits)
 
 
         self.values.set(state, action, updated)
         self.values.update_count(state, action)
 
-    def play(self, env, discretizer, load=True, animate=False):
+    def play(self, load=True):
+
+        env, discretizer = utils.get_env(self.env_name, train=False)
+
         if load:
             self.load_if_exists()
 
         s, _ = env.reset()
-
-        if animate:
-            env.render()
 
         while True:
             s_discrete = discretizer(s)
@@ -74,29 +81,27 @@ class QAgent:
 
             s, _, done, _, _ = env.step(a)
 
-            if animate:
-                env.render()
-
             if done:
                 break
 
         env.close()
 
-    def train(self, env, discretizer, load=True, animate=False):
-
+    def train(self, load=True, animate=False):
+        
+        env, discretizer = utils.get_env(self.env_name, train=True)
 
         if load:
             self.load_if_exists()
 
         s, _ = env.reset()
 
-        lengths = []
+        rewards = []
 
         upd = None
         if animate:
-            upd = animation_plot(lengths)
+            upd = animation_plot(rewards)
 
-        ep_length = 0
+        reward = 0
 
         def signal_handler(sig, frame):
             self.save()
@@ -107,13 +112,13 @@ class QAgent:
 
         
 
-        for i in N():
+        for i in utils.N():
             
             s_discrete = discretizer(s)
             a = self.act(s_discrete)
 
             s, r, done, truncated, info = env.step(a)
-            ep_length += 1
+            reward += r
 
             if done:
                 self.learn(s_discrete, a, r, None)
@@ -127,14 +132,14 @@ class QAgent:
                 print(f"Num pairs: {self.num_pairs()}")
                 print(s) 
                 print(discretizer(s))
-                if(len(lengths) > 0):
-                    print("Avg length: ", sum(lengths[-1000:]) / len(lengths[-1000:]))
+                if(len(rewards) > 0):
+                    print("Avg ep reward: ", sum(rewards[-1000:]) / len(rewards[-1000:]))
                 
 
             if done:
                 s, _ = env.reset()
-                lengths.append(ep_length)
-                ep_length = 0
+                rewards.append(reward)
+                reward = 0
 
         env.close()
 

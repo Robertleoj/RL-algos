@@ -14,6 +14,14 @@ class DiscreteRange:
         self.end = end
         self.num_intervals = num_intervals
 
+    @classmethod
+    def from_config(cls, config):
+        return cls(
+            config['start'],
+            config['end'],
+            config['num_intervals']
+        )
+
     def __call__(self, val):
         if val < self.start:
             return 0
@@ -26,6 +34,13 @@ class DiscreteInf:
     def __init__(self, num_intervals, factor):
         self.num_intervals = num_intervals
         self.factor = factor
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(
+            config['num_intervals'],
+            config['factor']
+        )
 
     def sqrt_smooth(self, val):
         if val == 0:

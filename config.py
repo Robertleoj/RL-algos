@@ -1,8 +1,76 @@
 
 config = {
     "q_learning": {
-        "epsilon": 0.1,
-        "gamma": 0.999,
-        "save_name": "q_learning_weights.pt"
+        'CartPole-v1': {
+            "epsilon": 0.1,
+            "gamma": 0.999,
+            "init_val": 100,
+            "save_name": "q_learning_cartpole.pt",
+            "update_type": "lr",
+            "lr": 1,
+            "lr_decay": 0.0001
+        },
+        'MountainCar-v0': {
+            "epsilon": 0.1,
+            "gamma": 0.999,
+            "init_val": 10,
+            "save_name": "q_learning_mountaincar.pt",
+            "update_type": "lr",
+            "lr": 1,
+            "lr_decay": 0.0001
+        },
+        'Acrobot-v1': {
+            "epsilon": 0.1,
+            "gamma": 0.999,
+            "init_val": 10,
+            "save_name": "q_learning_acrobot.pt",
+            "update_type": "lr",
+            "lr": 1,
+            "lr_decay": 0.0001
+        }
+    },
+    'sarsa': {
+        'CartPole-v1': {
+            "epsilon": 0.1,
+            "gamma": 0.999,
+            "init_val": 100,
+            "save_name": "sarsa_cartpole.pt",
+            "update_type": "lr",
+            "lr": 1,
+            "lr_decay": 0.0001
+        },
+        'MountainCar-v0': {
+            "epsilon": 0.1,
+            "gamma": 0.999,
+            "init_val": 10,
+            "save_name": "sarsa_mountaincar.pt",
+            "update_type": "lr",
+            "lr": 1,
+            "lr_decay": 0.0001
+        },
+        'Acrobot-v1': {
+            "epsilon": 0.1,
+            "gamma": 0.999,
+            "init_val": 10,
+            "save_name": "sarsa_acrobot.pt",
+            "update_type": "lr",
+            "lr": 1,
+            "lr_decay": 0.0001
+        }
+    },
+    "DynaQ": {
+        'Acrobot-v1': {
+            "epsilon": 0.1,
+            "gamma": 0.999,
+            "init_val": 0,
+            "update_type": "lr",
+            "lr": 1,
+            "lr_decay": 1e-5,
+            "buffer_size": 10 ** 10,
+            "n_planning_steps": 10,
+            "save_name": "dynaq_acrobot.pt",
+            "buffer_save_name": "dynaq_acrobot_buffer.pt"
+        }
     }
+
 }

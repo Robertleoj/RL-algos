@@ -24,31 +24,14 @@ config = {
 
 class CartPoleDiscretizer:
     def __init__(self):
-        cart_pos_conf = config['cart_pos']
-        self.cart_pos = DiscreteRange(
-            cart_pos_conf['start'], 
-            cart_pos_conf['end'], 
-            cart_pos_conf['num_intervals']
-        )
+        self.cart_pos = DiscreteRange.from_config(config['cart_pos'])
 
         pole_angle_conf = config['pole_angle']
-        self.pole_angle = DiscreteRange(
-            pole_angle_conf['start'],
-            pole_angle_conf['end'],
-            pole_angle_conf['num_intervals']
-        )
+        self.pole_angle = DiscreteRange.from_config(config['pole_angle'])
 
-        pole_angular_vel_conf = config['pole_angular_vel']
-        self.pole_angular_vel = DiscreteInf(
-            pole_angular_vel_conf['num_intervals'],
-            pole_angular_vel_conf['factor']
-        )
+        self.pole_angular_vel = DiscreteInf.from_config(config['pole_angular_vel'])
 
-        cart_vel_conf = config['cart_vel']
-        self.cart_vel = DiscreteInf(
-            cart_vel_conf['num_intervals'],
-            cart_vel_conf['factor']
-        )
+        self.cart_vel = DiscreteInf.from_config(config['cart_vel'])
     
 
     def __call__(self, observation: np.ndarray):
