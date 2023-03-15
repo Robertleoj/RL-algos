@@ -1,31 +1,30 @@
 import numpy as np
-import pickle
-from config import config
 from pathlib import Path
 import utils
-from plotting import animation_plot
-import gymnasium as gym
-import signal
+import discretizers
+from .base import AgentBase
+from os import remove
 
 
-class QAgent:
+class QAgent(AgentBase):
+    agent_name = 'q_learning'
+
     def __init__(self, env_name):
-
-        self.env_name = env_name
-
-        self.conf = config['q_learning'][env_name]
+        super().__init__(env_name)
 
         self.updater = utils.updaters.get_updater(self.conf)
 
         # get num actions
-        env, _ = utils.get_env(env_name)
+        env = utils.get_env(env_name)
         num_actions = env.action_space.n
         env.close()
 
         self.values = utils.data_structures.ValueMap(num_actions, init_val=self.conf['init_val'])
         self.num_actions = num_actions
 
-        self.fpath = Path("./weights/" + self.conf['save_name'])
+        self.weight_path = Path("./weights/" + self.conf['save_name'])
+
+        self.discretizer = discretizers.get_discretizer(env_name)
 
     def act(self, state):
 
@@ -35,113 +34,50 @@ class QAgent:
         return self.act_optimal(state)
 
     def act_optimal(self, state):
+        state = self.discretizer(state)
         return np.argmax(self.values.get(state))
 
-    def num_pairs(self):
-        return self.values.num_pairs()
-
     def load_if_exists(self):
-        if self.fpath.exists():
+        if self.weight_path.exists():
             self.load()
 
     def save(self):
-        self.values.save(self.fpath)
+        self.values.save(self.weight_path)
 
     def load(self):
-        self.values.load(self.fpath)
+        self.values.load(self.weight_path)
 
-    def learn(self, state, action, reward, next_state=None):
+    def reset(self):
+        remove(self.weight_path)
 
+    def learn(self, episode_transitions):
+        
+        last_transition: utils.types.transition = episode_transitions[-1]
+
+        s = self.discretizer(last_transition.state)
+        a = last_transition.action
+        r = last_transition.reward
+
+        next_state = self.discretizer(last_transition.next_state)
+
+        done = last_transition.done
 
         next_val = 0
-        if next_state is not None:
+        if done:
+            # zero out the value of final state
+            self.values.zero_out(next_state)
+        else:
             next_val = np.max(self.values.get(next_state))
 
-        old_val = self.values.get(state)[action]
-        n_visits = self.values.get_visits(state)[action]
+        old_val = self.values.get(s)[a]
+        n_visits = self.values.get_visits(s)[a]
 
-        updated = self.updater(old_val, reward + self.conf['gamma'] * next_val, n_visits)
+        updated = self.updater(old_val, r + self.conf['gamma'] * next_val, n_visits)
 
 
-        self.values.set(state, action, updated)
-        self.values.update_count(state, action)
+        self.values.set(s, a, updated)
+        self.values.update_count(s, a)
 
-    def play(self, load=True):
-
-        env, discretizer = utils.get_env(self.env_name, train=False)
-
-        if load:
-            self.load_if_exists()
-
-        s, _ = env.reset()
-
-        while True:
-            s_discrete = discretizer(s)
-            a = self.act_optimal(s_discrete)
-
-            s, _, done, _, _ = env.step(a)
-
-            if done:
-                break
-
-        env.close()
-
-    def train(self, load=True, animate=False):
-        
-        env, discretizer = utils.get_env(self.env_name, train=True)
-
-        if load:
-            self.load_if_exists()
-
-        s, _ = env.reset()
-
-        rewards = []
-
-        upd = None
-        if animate:
-            upd = animation_plot(rewards)
-
-        reward = 0
-
-        def signal_handler(sig, frame):
-            self.save()
-            env.close()
-            exit(0)
-
-        signal.signal(signal.SIGINT, signal_handler)
-
-        
-
-        for i in utils.N():
-            
-            s_discrete = discretizer(s)
-            a = self.act(s_discrete)
-
-            s, r, done, truncated, info = env.step(a)
-            reward += r
-
-            if done:
-                self.learn(s_discrete, a, r, None)
-            else:
-                s_next_discrete = discretizer(s)
-                self.learn(s_discrete, a, r, s_next_discrete)
-
-            if i % 10000 == 0:
-                # upd()
-                print(f"Episode: {i}, reward: {r}")
-                print(f"Num pairs: {self.num_pairs()}")
-                print(s) 
-                print(discretizer(s))
-                if(len(rewards) > 0):
-                    print("Avg ep reward: ", sum(rewards[-1000:]) / len(rewards[-1000:]))
-                
-
-            if done:
-                s, _ = env.reset()
-                rewards.append(reward)
-                reward = 0
-
-        env.close()
 
 
 

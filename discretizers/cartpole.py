@@ -26,7 +26,6 @@ class CartPoleDiscretizer:
     def __init__(self):
         self.cart_pos = DiscreteRange.from_config(config['cart_pos'])
 
-        pole_angle_conf = config['pole_angle']
         self.pole_angle = DiscreteRange.from_config(config['pole_angle'])
 
         self.pole_angular_vel = DiscreteInf.from_config(config['pole_angular_vel'])

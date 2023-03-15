@@ -1,4 +1,5 @@
 import numpy as np
+import random
 import pickle
 
 class ValueMap:
@@ -16,6 +17,9 @@ class ValueMap:
     def load(self, path):
         with open(path, 'rb') as f:
             self.values, self.num_encountered = pickle.load(f)
+
+    def zero_out(self, state):
+        self.values[state] = np.zeros(self.num_actions)
 
     def assert_state(self, state):
         if state not in self.values:
@@ -49,16 +53,16 @@ class ValueMap:
 class DynaBuffer:
     def __init__(self, buffer_size=None):
         self.buffer_size = buffer_size
-        self.buffer = []
+        self.buffer = np.array([],dtype=object)
 
     def __len__(self):
         return len(self.buffer)
 
-    def insert(self, state, action, reward, next_state):
-        self.buffer.append((state, action, reward, next_state))
+    def insert(self, el):
+        np.append(self.buffer, np.array([el], dtype=object))
 
         if self.buffer_size is not None:
-            self.buffer = self.buffer[-self.buffer_size:]
+            self.buffer = self.buffer[(-self.buffer_size):]
 
     def save(self, fname):
         with open(fname, 'wb') as f:

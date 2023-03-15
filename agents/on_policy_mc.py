@@ -1,15 +1,12 @@
-from config import config
 import numpy as np
 from pathlib import Path
-from plotting import animation_plot
 import discretizers
 from .base import AgentBase
 import utils
 from os import remove
-import signal
 
-class Sarsa(AgentBase):
-    agent_name = 'sarsa'
+class OnPolicyMonteCarlo(AgentBase):
+    agent_name = 'on_policy_mc'
 
     def __init__(self, env_name:str):
         super().__init__(env_name)
@@ -52,46 +49,48 @@ class Sarsa(AgentBase):
         if self.weight_path.exists():
             remove(self.weight_path)
 
-    def learn(self, episode_transitions: list):
+    def learn_episode_end(self, episode_transitions):
 
-        last_transition: utils.types.transition = episode_transitions[-1]
-
+        # zero out return of last transition
+        last_transition = episode_transitions[-1]
         if last_transition.done:
             self.values.zero_out(self.discretizer(last_transition.next_state))
-            # learn last final state
 
-            s = self.discretizer(last_transition.state)
-            a = last_transition.action
-            r = last_transition.reward
-
-            old_val = self.values.get(s)[a]
-
-            n_visits = self.values.get_visits(s)[a]
-
-            updated = self.updater(old_val, r, n_visits)
-
-            self.values.set(s, a, updated)
-            self.values.update_count(s, a)
+        ep_return = 0
 
 
+        counts: dict = {}
 
-        if len(episode_transitions) >= 2:
-            prev_transition: utils.types.transition = episode_transitions[-2]
+        for t in episode_transitions:
+            state = self.discretizer(t.state)
+            action = t.action
 
-            state = self.discretizer(prev_transition.state)
-            action = prev_transition.action
-            reward = prev_transition.reward
-            next_state = self.discretizer(prev_transition.next_state)
-            next_action = last_transition.action
+            if (state, action) not in counts:
+                counts[(state, action)] = 0
 
-            next_val = self.values.get(next_state)[next_action]
+            counts[(state, action)] += 1
+
+        for transition in reversed(episode_transitions):
+
+            dict_el = (self.discretizer(transition.state), transition.action)
+
+            if counts[dict_el] != 1:
+                counts[dict_el] -= 1
+                continue
+
+            ep_return = transition.reward + self.conf['gamma'] * ep_return
+
+            state = self.discretizer(transition.state)
+            action = transition.action
+
 
             old_val = self.values.get(state)[action]
 
             n_visits = self.values.get_visits(state)[action]
 
-            updated = self.updater(old_val, reward + self.conf['gamma'] * next_val, n_visits)
+            new_val = self.updater(old_val, ep_return, n_visits)
 
-            self.values.set(state, action, updated)
+            self.values.set(state, action, new_val)
 
             self.values.update_count(state, action)
+

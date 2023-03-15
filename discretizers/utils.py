@@ -1,5 +1,6 @@
 import math
 
+
 def sign(val):
     if val == 0:
         return 0
