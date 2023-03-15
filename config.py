@@ -15,7 +15,7 @@ config = {
     "off_policy_mc": {
         'CartPole-v1': {
             'epsilon': 0.05,
-            "gamma": 0.99,
+            "gamma": 0.999,
             "init_val": 10,
             "save_name": "off_policy_mc_cartpole.pt",
         }
@@ -96,6 +96,34 @@ config = {
             "lr_decay": 0.0001
         }
     },
+    "n_step_sarsa":{
+        'CartPole-v1': {
+            "epsilon": 0.1,
+            "gamma": 0.999,
+            "init_val": 200,
+            "save_name": "n_step_sarsa_cartpole.pt",
+            # "update_type": "lr",
+            # "lr": 1,
+            # "lr_decay": 0.0001,
+            "update_type":"exp_avg",
+            "alpha": 0.002,
+            "n": 25
+        } ,
+        "Acrobot-v1": {
+            "epsilon": 0.001,
+            "gamma": 0.999,
+            "init_val": 0,
+            "save_name": "n_step_sarsa_acrobot.pt",
+            "update_type": 'avg',
+            # "update_type": "lr",
+            # "lr": 1,
+            # "lr_decay": 0.0001,
+            # "update_type":"exp_avg",
+            # "alpha": 0.1,
+            "n": 25
+        }
+    },
+
     "DynaQ": {
         'Acrobot-v1': {
             "epsilon": 0.1,

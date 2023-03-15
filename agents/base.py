@@ -76,6 +76,9 @@ class AgentBase:
 
         env.close()
 
+    def episode_print(self):
+        pass
+
 
     def train(self, load=True):
         env = utils.get_env(self.env_name, train=True)
@@ -110,6 +113,7 @@ class AgentBase:
                 print(f"Episode {episodes}")
                 if len(rewards) > 0:
                     print(f"Average reward: {sum(rewards[-1000:])/len(rewards[-1000:])}")
+                    self.episode_print()
 
             if done or truncated:
                 s, _ = env.reset()

@@ -1,12 +1,9 @@
-from config import config
 import numpy as np
 from pathlib import Path
-from plotting import animation_plot
 import discretizers
 from .base import AgentBase
 import utils
 from os import remove
-import signal
 
 class Sarsa(AgentBase):
     agent_name = 'sarsa'

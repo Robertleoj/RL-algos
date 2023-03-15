@@ -12,6 +12,13 @@ class AvgUpdater:
 
     def __call__(self, curr_val, new_val, num_encounters):
         return (num_encounters * curr_val + new_val) / (num_encounters + 1)
+
+class ExpAvgUpdater:
+    def __init__(self, alpha):
+        self.alpha = alpha
+
+    def __call__(self, curr_val, new_val, num_encounters):
+        return self.alpha * new_val + (1 - self.alpha) * curr_val
     
 
 def get_updater(conf):
@@ -21,6 +28,8 @@ def get_updater(conf):
         return AvgUpdater()
     elif update_type == 'lr':
         return LRUpdater(conf['lr'], conf['lr_decay'])
+    elif update_type =="exp_avg":
+        return ExpAvgUpdater(conf['alpha'])
     else:
         raise Exception("Invalid update type")
 
