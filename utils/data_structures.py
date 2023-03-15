@@ -44,10 +44,10 @@ class ValueMap:
 
         self.values[state][action] = val
 
-    def update_count(self, state, action):
+    def update_count(self, state, action, num=1):
         self.assert_state(state)
 
-        self.num_encountered[state][action] += 1
+        self.num_encountered[state][action] += num
 
 
 class DynaBuffer:

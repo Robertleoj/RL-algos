@@ -2,11 +2,22 @@
 config = {
     "on_policy_mc": {
         'CartPole-v1': {
-            "epsilon": 0.1,
-            "gamma": 0.999,
+            "epsilon": 0.05,
+            "gamma": 0.99,
             "init_val": 100,
-            "save_name": "monte_carlo_cartpole.pt",
-            "update_type": "avg",
+            "save_name": "on_policy_mc_cartpole.pt",
+            # "update_type": "avg",
+            "update_type": "lr",
+            "lr": 1,
+            "lr_decay": 0.01
+        }
+    },
+    "off_policy_mc": {
+        'CartPole-v1': {
+            'epsilon': 0.05,
+            "gamma": 0.99,
+            "init_val": 10,
+            "save_name": "off_policy_mc_cartpole.pt",
         }
     },
     "q_learning": {
