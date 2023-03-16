@@ -66,6 +66,7 @@ class AgentBase:
         s, _ = env.reset()
 
         episodes = 0
+        reward = 0
         while episodes < games:
             env.render()
 
@@ -75,10 +76,13 @@ class AgentBase:
             a = self.act_optimal(s)
 
             s, r, done, _, _ = env.step(a)
+            reward += 1
             # print(s)
             # print(r)
 
             if done:
+                print("Episode reward:", reward)
+                reward = 0
                 episodes += 1
                 s, _ = env.reset()
 
