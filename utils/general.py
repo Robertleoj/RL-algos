@@ -1,6 +1,8 @@
 import discretizers
 import gymnasium as gym
 import numpy as np
+import flappy_bird_gym
+
 
 def N():
     n = 0
@@ -10,6 +12,9 @@ def N():
 
 def get_env(env_name, train=True):
 
+    if env_name == "FlappyBird-v0":
+        env = flappy_bird_gym.make("FlappyBird-v0")
+        return env
 
     if train:
         env = gym.make(env_name)

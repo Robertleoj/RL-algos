@@ -8,8 +8,8 @@ from enum import Enum
 
 
 
-class DynaQ(AgentBase):
-    agent_name = 'DynaQ'
+class DynaQPrioritized(AgentBase):
+    agent_name = 'DynaQ_prioritized'
 
     def __init__(self, env_name):
         super().__init__(env_name)
@@ -21,12 +21,11 @@ class DynaQ(AgentBase):
         env = utils.get_env(env_name)
         num_actions = env.action_space.n
         env.close()
+        self.num_actions = num_actions
 
         self.values = utils.data_structures.ValueMap(num_actions, init_val=self.conf['init_val'])
 
-        self.buffer = utils.data_structures.UniformBuffer(self.conf['buffer_size'])
-
-        self.num_actions = num_actions
+        self.pqbuffer = utils.data_structures.PriorityBuffer()
 
         self.weight_path = Path("./weights/" + self.conf['save_name'])
         self.buffer_path = Path("./buffers/" + self.conf['buffer_save_name'])
@@ -51,11 +50,11 @@ class DynaQ(AgentBase):
 
     def save(self):
         self.values.save(self.weight_path)
-        self.buffer.save(self.buffer_path)
+        self.pqbuffer.save(self.buffer_path)
 
     def load(self):
         self.values.load(self.weight_path)
-        self.buffer.load(self.buffer_path)
+        self.pqbuffer.load(self.buffer_path)
 
     def reset(self):
         if self.weight_path.exists():
@@ -72,13 +71,16 @@ class DynaQ(AgentBase):
         s_next = self.discretizer(last_transition.next_state)
         done = last_transition.done
 
+        self.pqbuffer.insert_model(s, a, r, s_next, done)
 
-        self.__learn(s, a, r, s_next, done)
+        diff = self.__learn(s, a, r, s_next, done)
+        if diff > self.conf['pq_threshold']:
+            self.pqbuffer.insert_pq((s, a), diff)
 
-        self.buffer.insert((s, a, r, s_next, done))
         self.plan()
 
-        
+    # def episode_print(self):
+        # print(f"PQ size: {self.pqbuffer.pq_size()}")
         
 
     def __learn(self, state, action, reward, next_state, done, update_count = True):
@@ -95,7 +97,7 @@ class DynaQ(AgentBase):
 
         updated = self.updater(old_val, target, n_visits)
 
-        diff = abs(updated - old_val)
+        diff = abs(target - old_val)
 
 
         self.values.set(state, action, updated)
@@ -106,11 +108,39 @@ class DynaQ(AgentBase):
         return diff
 
     def plan(self):
-        if len(self.buffer) < self.conf['n_planning_steps']:
-            return
+        n = self.conf['n_planning_steps']
+        steps_performed = 0
+        for _ in range(n):
+            if self.pqbuffer.pq_empty():
+                break
 
-        samples = self.buffer.sample(self.conf['n_planning_steps'])
+            s, a = self.pqbuffer.pop_pq()
 
-        for sample in samples:
-            s, a, r, s_next, done = sample
+            r, s_next, done = self.pqbuffer.sample_model(s, a)
+
+
             self.__learn(s, a, r, s_next, done, update_count=False)
+
+            for _ in range(self.conf['reverse_samples']):
+                s_bar, a_bar = self.pqbuffer.reverse_sample(s)
+
+                r_bar, s_next_bar, done_bar = self.pqbuffer.sample_model(s_bar, a_bar)
+
+                target = r_bar
+                if not done_bar:
+                    target += self.conf['gamma'] * np.max(self.values.get(s_next_bar))
+
+
+                curr = self.values.get(s_bar)[a_bar]
+
+                diff = abs(target - curr)
+
+                if diff > self.conf['pq_threshold']:
+                    self.pqbuffer.insert_pq((s_bar, a_bar), diff)
+
+
+            steps_performed += 1
+
+        # print(f"Performed {steps_performed} planning steps")
+
+

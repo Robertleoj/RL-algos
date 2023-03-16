@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from config import config
 import signal
+import time
 import utils
 import numpy as np
 
@@ -66,9 +67,16 @@ class AgentBase:
 
         episodes = 0
         while episodes < games:
+            env.render()
+
+            if self.env_name == 'FlappyBird-v0':
+                time.sleep(1 / 30)
+            
             a = self.act_optimal(s)
 
-            s, _, done, _, _ = env.step(a)
+            s, r, done, _, _ = env.step(a)
+            # print(s)
+            # print(r)
 
             if done:
                 episodes += 1
