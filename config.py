@@ -213,5 +213,42 @@ config = {
             "n_planning_steps": 10,
             "reverse_samples": 10
         }
+    },
+    "reinforce": {
+        'Pendulum-v1': {
+            'gamma': 0.999,
+            'lr': 1e-5,
+        }
+    },
+    'ac_bootstrap': {
+        "Pendulum-v1": {
+            "gamma": 0.999,
+            "lr": 1e-3,
+            "bootstrap": 1
+        }
+    },
+    'SAC': {
+        'Pendulum-v1': {
+            'gamma': 0.99,
+            "lr": 1e-5,
+            "buffer_size": int(1e6),
+            "update_rate": 1,
+            "num_updates": 1,
+            "batch_size": 256,
+            "entropy_alpha": 0.1,
+            "update_rho": 0.9,
+            "start_steps": 10000
+        },
+        'LunarLander-v2': {
+            'gamma': 0.99,
+            "lr": 1e-3,
+            "buffer_size": int(1e5),
+            "update_rate": 1,
+            "num_updates": 1,
+            "batch_size": 128,
+            "entropy_alpha": 0.05,
+            "update_rho": 0.005,
+            "start_steps": 10000
+        }
     }
 }

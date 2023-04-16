@@ -17,15 +17,15 @@ class AgentBase:
 
     @abstractmethod
     def save(self):
-        raise NotImplementedError
+        pass
 
     @abstractmethod
     def load(self):
-        raise NotImplementedError
+        pass
 
     @abstractmethod
     def load_if_exists(self):
-        raise NotImplementedError
+        pass
 
     @abstractmethod
     def learn(self, episode_transitions):
@@ -54,6 +54,15 @@ class AgentBase:
         signal.signal(signal.SIGINT, signal_handler)
 
     @abstractmethod
+    def process_transition(self, trans: utils.transition):
+        pass
+
+    @abstractmethod
+    def act_random(self):
+        return False
+
+
+    @abstractmethod
     def reset(self):
         raise NotImplementedError
 
@@ -75,12 +84,12 @@ class AgentBase:
             
             a = self.act_optimal(s)
 
-            s, r, done, _, _ = env.step(a)
+            s, r, done, t, _ = env.step(a)
             reward += 1
             # print(s)
             # print(r)
 
-            if done:
+            if done or t:
                 print("Episode reward:", reward)
                 reward = 0
                 episodes += 1
@@ -90,6 +99,7 @@ class AgentBase:
 
     def episode_print(self):
         pass
+
 
 
     def train(self, load=True):
@@ -110,21 +120,28 @@ class AgentBase:
 
         for i in utils.N():
             
-            a = self.act(s)
+            if self.act_random():
+                a = env.action_space.sample()
+            else:
+                a = self.act(s)
 
             old_s = s
             s, r, done, truncated, info = env.step(a)
+            done = done or truncated
 
-            episode_transitions.append(utils.transition(old_s, a, r, s, done))
+            transition = utils.transition(state=old_s, action=a, reward=r, next_state=s, done=done)
+            episode_transitions.append(transition)
+
+            self.process_transition(transition)
 
             reward += r
 
             self.learn(episode_transitions)
 
-            if i % 10000 == 0:
-                print(f"Episode {episodes}")
+            if i % 1000 == 0:
+                print(f"Episode {episodes}, total_steps: {i}")
                 if len(rewards) > 0:
-                    print(f"Average reward: {sum(rewards[-1000:])/len(rewards[-1000:])}")
+                    print(f"Average reward: {sum(rewards[-10:])/len(rewards[-10:])}")
                     self.episode_print()
 
             if done or truncated:

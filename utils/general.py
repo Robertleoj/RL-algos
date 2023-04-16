@@ -15,6 +15,13 @@ def get_env(env_name, train=True):
     if env_name == "FlappyBird-v0":
         env = flappy_bird_gym.make("FlappyBird-v0")
         return env
+    if env_name == "LunarLander-v2":
+        if train:
+            env = gym.make(env_name, continuous=True)
+        else:
+            env = gym.make(env_name, continuous=True, render_mode='human')
+        return env
+    
 
     if train:
         env = gym.make(env_name)
