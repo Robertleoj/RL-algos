@@ -10,130 +10,9 @@ import random
 from pathlib import Path
 import torch.nn.functional as F
 from preprocessors import get_preprocessor
+from .neural_nets import StochasticPolicyNet, QNet
 
 device = 'cpu'
-
-LOG_STD_MAX = 2
-LOG_STD_MIN = -20
-
-def tofloattensor(x):
-    if isinstance(x, np.ndarray):
-        x = torch.tensor(x, dtype=torch.float32)
-    else:
-        x = x.to(torch.float32)
-    return x
-
-class PolicyNet(nn.Module):
-    def __init__(self, env_name):
-        super().__init__()
-        self.env_name = env_name
-        self.preprocessor = get_preprocessor(env_name)
-        self._get_net()
-
-    def _get_net(self):
-        if self.env_name == 'Pendulum-v1':
-
-            self.net = nn.Sequential(
-                nn.Linear(3, 64),
-                nn.ReLU(),
-                nn.Linear(64, 64),
-                nn.ReLU(),
-                nn.Linear(64, 64),
-                nn.ReLU()
-            )
-
-            self.mean = nn.Linear(64, 1)
-            self.logstd = nn.Linear(64, 1)
-
-            self.act_limit = 2
-
-        elif self.env_name == "LunarLander-v2":
-            self.net = nn.Sequential(
-                nn.Linear(8, 64),
-                nn.ReLU(),
-                nn.Linear(64, 64),
-                nn.ReLU(),
-                nn.Linear(64, 64),
-                nn.ReLU(),
-                nn.Linear(64, 64),
-                nn.ReLU()
-            )
-
-            self.mean = nn.Linear(64, 2)
-            self.logstd = nn.Linear(64, 2)
-
-            self.act_limit = 1
-
-
-    def forward(self, x, deterministic=False):
-        if self.preprocessor is not None:
-            x = self.preprocessor(x.cpu())
-
-        
-        x = tofloattensor(x).to(device)
-        # print(x.shape, x.dtype)
-
-        pol_out = self.net(x)
-        mean = self.mean(pol_out)
-        if deterministic:
-            return mean
-
-        log_std = self.logstd(pol_out)
-        log_std = torch.clamp(log_std, LOG_STD_MIN, LOG_STD_MAX)
-
-
-        std = torch.exp(log_std)
-
-        dist = Normal(mean, std)
-
-        samples = dist.rsample()
-
-
-        logp_pi = dist.log_prob(samples).sum(axis=-1)
-        logp_pi -= (2*(np.log(2) - samples - F.softplus(-2*samples))).sum(axis=1)
-
-        samples = torch.tanh(samples)
-        samples = samples * self.act_limit
-        # print(samples.shape)
-        return samples, logp_pi
-
-class QNet(nn.Module):
-    def __init__(self, env_name):
-        super().__init__()
-        self._get_net(env_name)
-        self.preprocessor = get_preprocessor(env_name)
-    
-    def _get_net(self, env_name):
-        if env_name == 'Pendulum-v1':
-            self.net = nn.Sequential(
-                nn.Linear(4, 64),
-                nn.ReLU(),
-                nn.Linear(64, 64),
-                nn.ReLU(),
-                nn.Linear(64, 1)
-            )
-        elif env_name == 'LunarLander-v2':
-            self.net = nn.Sequential(
-                nn.Linear(10, 64),
-                nn.ReLU(),
-                nn.Linear(64, 64),
-                nn.ReLU(),
-                nn.Linear(64, 64),
-                nn.ReLU(),
-                nn.Linear(64, 1)
-            )
-
-    def forward(self, s, a):
-
-        if self.preprocessor is not None:
-            s = self.preprocessor(s.cpu())
-
-        s = tofloattensor(s).to(device)
-        a = tofloattensor(a).to(device)
-
-        inp = torch.cat((s, a), dim=1)
-        return self.net(inp)
-
 
 class SAC(AgentBase):
     agent_name = 'SAC'
@@ -142,11 +21,11 @@ class SAC(AgentBase):
     def __init__(self, env_name):
         super().__init__(env_name)
 
-        self.pol_net = PolicyNet(env_name).to(device)
-        self.q1 = QNet(env_name).to(device)
-        self.q2 = QNet(env_name).to(device)
-        self.q1_targ = QNet(env_name).to(device)
-        self.q2_targ = QNet(env_name).to(device)
+        self.pol_net = StochasticPolicyNet(env_name, device).to(device)
+        self.q1 = QNet(env_name, device).to(device)
+        self.q2 = QNet(env_name, device).to(device)
+        self.q1_targ = QNet(env_name, device).to(device)
+        self.q2_targ = QNet(env_name, device).to(device)
 
         self.q1_targ.load_state_dict(self.q1.state_dict())
         self.q2_targ.load_state_dict(self.q2.state_dict())

@@ -214,19 +214,6 @@ config = {
             "reverse_samples": 10
         }
     },
-    "reinforce": {
-        'Pendulum-v1': {
-            'gamma': 0.999,
-            'lr': 1e-5,
-        }
-    },
-    'ac_bootstrap': {
-        "Pendulum-v1": {
-            "gamma": 0.999,
-            "lr": 1e-3,
-            "bootstrap": 1
-        }
-    },
     'SAC': {
         'Pendulum-v1': {
             'gamma': 0.99,
