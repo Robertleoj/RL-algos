@@ -67,7 +67,11 @@ class AgentBase:
         raise NotImplementedError
 
     def play(self, games: int=1, load=True):
-        env = utils.get_env(self.env_name, train=False)
+        cont = False
+        if 'cont' in self.conf:
+            cont = self.conf['cont']
+
+        env = utils.get_env(self.env_name, train=False, cont=cont)
 
         if load:
             self.load_if_exists()

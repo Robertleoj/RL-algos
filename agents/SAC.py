@@ -10,7 +10,7 @@ import random
 from pathlib import Path
 import torch.nn.functional as F
 from preprocessors import get_preprocessor
-from .neural_nets import StochasticPolicyNet, QNet
+from .neural_nets import StochasticNormalPolicyNet, QNet
 
 device = 'cpu'
 
@@ -21,9 +21,9 @@ class SAC(AgentBase):
     def __init__(self, env_name):
         super().__init__(env_name)
 
-        self.pol_net = StochasticPolicyNet(env_name, device).to(device)
-        self.q1 = QNet(env_name, device).to(device)
-        self.q2 = QNet(env_name, device).to(device)
+        self.pol_net = StochasticNormalPolicyNet(env_name, device).to(device)
+        self.q1 :nn.Module = QNet(env_name, device).to(device)
+        self.q2 :nn.Module= QNet(env_name, device).to(device)
         self.q1_targ = QNet(env_name, device).to(device)
         self.q2_targ = QNet(env_name, device).to(device)
 

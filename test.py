@@ -18,12 +18,14 @@ import gymnasium as gym
 # agent = agents.Reinforce('Pendulum-v1')
 # agent = agents.ACBootstrap('Pendulum-v1')
 # agent = agents.SAC('Pendulum-v1')
-agent = agents.SAC('LunarLander-v2')
+# agent = agents.SAC('LunarLander-v2')
+# agent = agents.VanillaPolGradient('CartPole-v1')
+agent = agents.VanillaPolGradient('LunarLander-v2')
 
-agent.play(50)
+# agent.play(50)
 
-# agent.reset()
-# agent.train()
+agent.reset()
+agent.train()
 
 # fl = gym.make('FlappyBird-v0')
 # print(fl.observation_space)

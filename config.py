@@ -235,7 +235,24 @@ config = {
             "batch_size": 128,
             "entropy_alpha": 0.05,
             "update_rho": 0.005,
-            "start_steps": 10000
+            "start_steps": 10000,
+            'cont': True
         }
+    },
+    'vanilla_policy_gradient': {
+        'CartPole-v1':  {
+            'gamma': 1.0,
+            "lr": 1e-2,
+            "batch_size": 10000,
+            'hidden_shapes': [32, 32],
+            'reward_div': 100
+        },
+        'LunarLander-v2': {
+            'gamma': 1,
+            "lr": 3e-4,
+            "batch_size": 5000,
+            'hidden_shapes': [64, 64, 64],
+            'reward_div': 100
+        },
     }
 }
