@@ -35,11 +35,26 @@ class ValueNet(nn.Module):
         assert isinstance(state, torch.Tensor)
         return self.net(state)
 
-class StochasticMultinomialPolicyNet(nn.Module):
+class ActorBase(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def get_action_and_logprobs(self, x):
+        raise NotImplementedError
+
+    def forward(self, x):
+        raise NotImplementedError
+
+    def log_probs(self, s, a):
+        raise NotImplementedError
+
+
+
+class StochasticMultinomialPolicyNet(ActorBase):
 
     def __init__(self, shape_in, action_shape, hidden_shapes=[64, 64]):
         super().__init__()
-        self.middle = mlp([shape_in] + hidden_shapes + [action_shape])
+        self.net = mlp([shape_in] + hidden_shapes + [action_shape])
 
 
     def get_action_and_logprobs_categorical(self, logits):
@@ -47,6 +62,11 @@ class StochasticMultinomialPolicyNet(nn.Module):
         samples = dist.sample()
         logp_pi = dist.log_prob(samples)
         return samples, logp_pi
+
+    def log_probs(self, s, a):
+        logits = self.net(s)
+        dist = torch.distributions.Categorical(logits=logits)
+        return dist.log_prob(a)
 
     def forward(self, x, just_logits=False):
         assert isinstance(x, torch.Tensor)
@@ -57,7 +77,7 @@ class StochasticMultinomialPolicyNet(nn.Module):
             logits = self.net(x)
             return self.get_action_and_logprobs_categorical(logits)
 
-class StochasticNormalPolicyNet(nn.Module):
+class StochasticNormalPolicyNet(ActorBase):
     def __init__(self, shape_in, action_shape, hidden_shapes=[64, 64], act_limit=1):
         super().__init__()
         self.act_limit = act_limit
@@ -87,8 +107,14 @@ class StochasticNormalPolicyNet(nn.Module):
             samples = modified_samples
 
         return samples, logp_pi
+    
+    def log_probs(self, s, a):
+        mean = self.mean_head(self.middle(s))
+        log_std = self.logstd_head(self.middle(s))
+        std = torch.exp(log_std)
+        dist = Normal(mean, std)
 
-
+        return dist.log_prob(a)
 
     def forward(self, x, deterministic=False):
 

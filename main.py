@@ -1,31 +1,7 @@
 import agents
-import gymnasium as gym
 
+agent = agents.Reinforce('CartPole-v0')
 
-# agent = agents.DynaQ("Acrobot-v1")
-# agent = agents.DynaQ("FlappyBird-v0")
-# agent = agents.DynaQPrioritized("Acrobot-v1")
-# agent = agents.DynaQPrioritized("FlappyBird-v0")
-# agent = agents.MonteCarlo("Taxi-v3")
-#agent = agents.NStepSarsa("CartPole-v1")
-# agent = agents.NStepSarsa("FlappyBird-v0")
-#agent = agents.NStepSarsa("Acrobot-v1")
-# agent = agents.Sarsa("CartPole-v1")
-# agent = agents.Sarsa("Taxi-v3")
-#agent = agents.QAgent("CartPole-v1")
-# agent = agents.QAgent("Taxi-v3")
-# agent = agents.Sarsa("MountainCar-v0")
-# agent = agents.Reinforce('Pendulum-v1')
-# agent = agents.ACBootstrap('Pendulum-v1')
-# agent = agents.SAC('Pendulum-v1')
-# agent = agents.SAC('LunarLander-v2')
-agent=agents.RGBSAC('CarRacing-v2')
-# agent = agents.VanillaPolGradient('CartPole-v1')
-# agent = agents.VanillaPolGradient('LunarLander-v2')
-
-# agent.play(50)
-
-agent.reset()
 agent.train()
 
 # fl = gym.make('FlappyBird-v0')

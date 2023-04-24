@@ -8,13 +8,14 @@ class AgentBase:
         self.env_name = env_name
         self.conf = config[self.agent_name][env_name]
 
-    def play(self):
-        self.load()
-        raise NotImplementedError
+    def play(self, load=True):
+        if load:
+            self.load()
 
-    def train(self, load=False):
+    def train(self, load=True):
+        if load:
+            self.load()
         self.save_on_exit()
-        raise NotImplementedError
 
     def save(self):
         pass
