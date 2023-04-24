@@ -19,8 +19,9 @@ import gymnasium as gym
 # agent = agents.ACBootstrap('Pendulum-v1')
 # agent = agents.SAC('Pendulum-v1')
 # agent = agents.SAC('LunarLander-v2')
+agent=agents.RGBSAC('CarRacing-v2')
 # agent = agents.VanillaPolGradient('CartPole-v1')
-agent = agents.VanillaPolGradient('LunarLander-v2')
+# agent = agents.VanillaPolGradient('LunarLander-v2')
 
 # agent.play(50)
 
